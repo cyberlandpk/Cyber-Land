@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { collectionMeta } from "@/features/products";
 import { productService } from "@/services/product.service";
 import CollectionView from "@/features/collections/components/CollectionView";
 
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 export const revalidate = 0;
 
 type Props = { params: Promise<{ handle: string }> };
-
-export async function generateStaticParams() {
-  return Object.keys(collectionMeta).map((handle) => ({ handle }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;

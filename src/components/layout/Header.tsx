@@ -156,11 +156,15 @@ function MenuPill({
   href,
   asButton,
   open,
+  onClick,
+  onKeyDown,
 }: {
   label: string;
   href?: string;
   asButton?: boolean;
   open?: boolean;
+  onClick?: () => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLSpanElement>) => void;
 }) {
   const inner = (
     <>
@@ -195,6 +199,10 @@ function MenuPill({
         className={cn("menu-item", open && "menu-item--open")}
         role="button"
         tabIndex={0}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={onClick}
+        onKeyDown={onKeyDown}
       >
         {inner}
       </span>
@@ -222,12 +230,29 @@ function NavDropdown({
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEnter = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
     onOpen();
   };
 
   const handleLeave = () => {
-    closeTimer.current = setTimeout(onClose, 120);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(onClose, 250);
+  };
+
+  const toggleDropdown = () => {
+    if (open) onClose();
+    else onOpen();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleDropdown();
+    }
+    if (event.key === "Escape") onClose();
   };
 
   return (
@@ -236,9 +261,17 @@ function NavDropdown({
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
     >
-      <MenuPill label={item.label} asButton open={open} />
+      <MenuPill
+        label={item.label}
+        asButton
+        open={open}
+        onClick={onOpen}
+        onKeyDown={handleKeyDown}
+      />
       <div
         className={cn("nav-dropdown", open && "nav-dropdown--open")}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
         aria-hidden={!open}
       >
         <div className="nav-dropdown__container">
@@ -315,6 +348,28 @@ export default function Header() {
     };
   }, [updateNavScroll]);
 
+  useEffect(() => {
+    if (!openDropdown) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenDropdown(null);
+    };
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !menuRef.current?.contains(target)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+    };
+  }, [openDropdown]);
+
   return (
     <header
       className={cn(
@@ -371,7 +426,11 @@ export default function Header() {
                   item={item}
                   open={openDropdown === item.label}
                   onOpen={() => setOpenDropdown(item.label)}
-                  onClose={() => setOpenDropdown(null)}
+                  onClose={() =>
+                    setOpenDropdown((current) =>
+                      current === item.label ? null : current
+                    )
+                  }
                 />
               ) : (
                 <li key={item.label} className="nav-item">
@@ -444,6 +503,7 @@ export default function Header() {
           "header-overlay",
           openDropdown && "header-overlay--visible"
         )}
+        onClick={() => setOpenDropdown(null)}
         aria-hidden
       />
     </header>

@@ -1081,6 +1081,17 @@ button {
   transition: opacity var(--animation-fast), visibility var(--animation-fast);
 }
 
+/* Invisible hover bridge: fills the gap between nav button and dropdown panel */
+.nav-dropdown::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: -16px;
+  right: -16px;
+  height: calc(0.5rem + 12px);
+  background: transparent;
+}
+
 .nav-dropdown--open {
   opacity: 1;
   visibility: visible;
@@ -1149,6 +1160,7 @@ button {
 .header-overlay--visible {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .live-demo-panel {

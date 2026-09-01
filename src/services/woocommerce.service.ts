@@ -1,4 +1,3 @@
-import axios from "axios";
 import { env } from "@/config/env";
 import type { Product } from "@/types";
 
@@ -58,6 +57,46 @@ export function mapWooProductToAppProduct(wcProduct: WooCommerceRawProduct): Pro
   };
 }
 
+class WooCommerceRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message);
+    this.name = "WooCommerceRequestError";
+  }
+}
+
+function buildQuery(params: Record<string, unknown>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) query.set(key, String(value));
+  }
+  return query.toString();
+}
+
+async function requestJson<T>(
+  url: string,
+  method: "GET" | "POST",
+  body?: Record<string, unknown>
+): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: method === "POST" ? { "Content-Type": "application/json" } : undefined,
+    body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new WooCommerceRequestError(
+      `WooCommerce request failed with status ${response.status}`,
+      response.status
+    );
+  }
+
+  return response.json() as Promise<T>;
+}
+
 async function wcRequest<T = unknown>(
   method: "GET" | "POST",
   endpoint: string,
@@ -71,44 +110,30 @@ async function wcRequest<T = unknown>(
 
   // Try Pretty Permalink endpoint first
   try {
-    const url = `${baseUrl}/wp-json/wc/v3${endpoint}`;
+    const baseEndpoint = `${baseUrl}/wp-json/wc/v3${endpoint}`;
     if (method === "GET") {
-      const res = await axios.get<T>(url, {
-        params: { ...dataOrParams, ...authParams },
-        timeout: 12000,
-      });
-      return res.data;
-    } else {
-      const res = await axios.post<T>(url, dataOrParams, {
-        params: authParams,
-        timeout: 12000,
-      });
-      return res.data;
+      const query = buildQuery({ ...dataOrParams, ...authParams });
+      return requestJson<T>(`${baseEndpoint}?${query}`, method);
     }
+    const query = buildQuery(authParams);
+    return requestJson<T>(`${baseEndpoint}?${query}`, method, dataOrParams);
   } catch (err: unknown) {
-    if (axios.isAxiosError(err) && err.response?.status === 404) {
+    if (err instanceof WooCommerceRequestError && err.status === 404) {
       // Fallback for Plain Permalinks via ?rest_route=
       const fallbackUrl = `${baseUrl}/index.php`;
       if (method === "GET") {
-        const res = await axios.get<T>(fallbackUrl, {
-          params: {
-            rest_route: `/wc/v3${endpoint}`,
-            ...dataOrParams,
-            ...authParams,
-          },
-          timeout: 12000,
+        const query = buildQuery({
+          rest_route: `/wc/v3${endpoint}`,
+          ...dataOrParams,
+          ...authParams,
         });
-        return res.data;
-      } else {
-        const res = await axios.post<T>(fallbackUrl, dataOrParams, {
-          params: {
-            rest_route: `/wc/v3${endpoint}`,
-            ...authParams,
-          },
-          timeout: 12000,
-        });
-        return res.data;
+        return requestJson<T>(`${fallbackUrl}?${query}`, method);
       }
+      const query = buildQuery({
+        rest_route: `/wc/v3${endpoint}`,
+        ...authParams,
+      });
+      return requestJson<T>(`${fallbackUrl}?${query}`, method, dataOrParams);
     }
     throw err;
   }
