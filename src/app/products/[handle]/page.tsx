@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { products } from "@/features/products";
 import { productService } from "@/services/product.service";
 import ProductDetail from "@/features/products/components/ProductDetail";
 import ProductSection from "@/components/sections/ProductSection";
 
 export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 export const revalidate = 0;
 
 type Props = { params: Promise<{ handle: string }> };
-
-export async function generateStaticParams() {
-  return products.map((p) => ({ handle: p.handle }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;
