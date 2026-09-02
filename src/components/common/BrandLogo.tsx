@@ -26,11 +26,12 @@ export default function BrandLogo({
     >
       <Image
         src="/brand/cyber-land-icon.png"
-        alt=""
-        width={42}
-        height={42}
+        alt="Cyber Land"
+        width={54}
+        height={54}
         className="brand-logo__icon"
-        sizes="42px"
+        sizes="(max-width: 768px) 44px, 54px"
+        priority
       />
       <span className="brand-logo__text">Cyber Land</span>
     </span>

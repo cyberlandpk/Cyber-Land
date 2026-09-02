@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { Product } from "@/features/products";
 import ProductCard from "@/components/common/ProductCard";
 import { cn } from "@/utils";
@@ -84,11 +85,36 @@ export default function CollectionView({
         </div>
 
         {filtered.length === 0 ? (
-          <div className="py-20 text-center">
-            <p className="heading text-xl">No products found</p>
-            <p className="mt-2 text-sm text-black/50">
-              Try adjusting filters or browse all products.
+          <div className="my-8 rounded-[28px] border border-[#EAE3D6] bg-gradient-to-b from-[#FFFDF9] to-[#FAF6EE] p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] md:my-12 md:p-16">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFF1F1] text-2xl text-[#BC0000] shadow-inner md:h-20 md:w-20 md:text-3xl">
+              🚀
+            </div>
+            <span className="mt-5 inline-block rounded-full bg-[#BC0000]/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-[#BC0000]">
+              In Stock Soon
+            </span>
+            <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight text-[#171717] md:text-3xl">
+              Coming Soon to {title}
+            </h2>
+            <p className="mx-auto mt-2.5 max-w-lg text-sm leading-relaxed text-black/60 md:text-base">
+              We are currently sourcing and testing premium inventory for this category. New products will be listed shortly!
             </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href={`https://wa.me/923458006009?text=Hi%20Cyber%20Land,%20I%20am%20inquiring%20about%20products%20in%20${encodeURIComponent(title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#1EBE5D] hover:shadow-md hover:shadow-[#25D366]/20"
+              >
+                <span>💬</span>
+                <span>Inquire on WhatsApp (+92 345 8006009)</span>
+              </a>
+              <Link
+                href="/collections"
+                className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white px-6 py-3 text-sm font-bold text-[#171717] transition-all hover:border-[#BC0000] hover:text-[#BC0000]"
+              >
+                <span>Browse All Categories</span>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="collection-grid">

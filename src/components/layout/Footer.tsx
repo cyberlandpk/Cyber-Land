@@ -104,7 +104,14 @@ export default function Footer() {
                 <ul className="footer-social-list">
                   {footerSocials.map((link) => (
                     <li key={link.label}>
-                      <span>{link.label}</span>
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="footer-link hover:text-[#BC0000] transition-colors"
+                      >
+                        <span>{link.label}</span>
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -112,10 +119,18 @@ export default function Footer() {
 
               <address className="footer-contact">
                 <p>Customer care</p>
-                <a href={siteConfig.support.phoneHref}>
+                <a href={siteConfig.support.phoneHref} className="hover:text-white transition-colors">
                   {siteConfig.support.phone}
                 </a>
-                <a href={`mailto:${siteConfig.support.email}`}>
+                <a
+                  href={siteConfig.support.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#25D366] hover:underline font-semibold"
+                >
+                  WhatsApp Support
+                </a>
+                <a href={`mailto:${siteConfig.support.email}`} className="hover:text-white transition-colors">
                   {siteConfig.support.email}
                 </a>
                 <span>{siteConfig.support.hours}</span>
@@ -126,12 +141,17 @@ export default function Footer() {
       </div>
 
       <div className="footer-copyright">
-        <div className="page-width footer-copyright__inner">
-          <p>© 2026 Cyber Land. All rights reserved.</p>
-          <ul>
+        <div className="page-width footer-copyright__inner flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <p className="text-xs text-white/60">
+            © 2026 Cyber Land. All rights reserved. <span className="mx-1.5 text-white/30">|</span> Powered by{" "}
+            <span className="font-bold text-white tracking-wide">BSH Solutions</span>
+          </p>
+          <ul className="flex flex-wrap items-center gap-4 text-xs">
             {footerPolicies.map((policy) => (
               <li key={policy.label}>
-                <Link href={policy.href}>{policy.label}</Link>
+                <Link href={policy.href} className="hover:text-white transition-colors">
+                  {policy.label}
+                </Link>
               </li>
             ))}
           </ul>

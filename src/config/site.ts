@@ -16,8 +16,10 @@ export const siteConfig = {
     hours: "Mon - Sat : 10am - 7pm",
   },
   social: {
+    facebook: "https://www.facebook.com/cyberlandpakistan",
+    instagram: "https://www.instagram.com/cyberlandcomputers/",
+    whatsapp: "https://wa.me/923458006009",
     x: "https://x.com/cyberland",
-    instagram: "https://www.instagram.com/cyberland/",
     youtube: "https://www.youtube.com/@CyberLand",
     discord: "https://discord.gg/uBn22bYTNB",
   },

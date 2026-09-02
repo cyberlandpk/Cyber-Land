@@ -180,10 +180,10 @@ export const footerQuickLinks = [
 ];
 
 export const footerSocials = [
-  { label: "X", href: "https://x.com/cyberland" },
-  { label: "Instagram", href: "https://www.instagram.com/cyberland/" },
-  { label: "Youtube", href: "https://www.youtube.com/@CyberLand" },
-  { label: "Discord", href: "https://discord.gg/uBn22bYTNB" },
+  { label: "Facebook", href: "https://www.facebook.com/cyberlandpakistan" },
+  { label: "Instagram", href: "https://www.instagram.com/cyberlandcomputers/" },
+  { label: "WhatsApp", href: "https://wa.me/923458006009" },
+  { label: "YouTube", href: "https://www.youtube.com/@CyberLand" },
 ];
 
 export const footerPolicies = [
