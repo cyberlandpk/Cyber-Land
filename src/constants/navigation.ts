@@ -183,7 +183,6 @@ export const footerSocials = [
   { label: "Facebook", href: "https://www.facebook.com/cyberlandpakistan" },
   { label: "Instagram", href: "https://www.instagram.com/cyberlandcomputers/" },
   { label: "WhatsApp", href: "https://wa.me/923458006009" },
-  { label: "YouTube", href: "https://www.youtube.com/@CyberLand" },
 ];
 
 export const footerPolicies = [
