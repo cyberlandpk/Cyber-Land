@@ -319,11 +319,6 @@ export const supportPages: Record<string, CmsPage> = {
         text: "Track Cyber Land orders in real time through our shipping partners. You’ll need your order number and phone / email used at checkout.",
       },
       {
-        type: "cta",
-        label: "Open Track Order portal",
-        href: "/pages/track-order",
-      },
-      {
         type: "p",
         text: "For delivery issues, contact help@cyberland.com or WhatsApp +92 345 8006009 with your order ID.",
       },
@@ -346,15 +341,10 @@ export const supportPages: Record<string, CmsPage> = {
       {
         type: "ul",
         items: [
-          "Use the returns portal linked below",
-          "Or email help@cyberland.com with order ID and reason",
+          "Email help@cyberland.com with order ID and reason",
+          "Or WhatsApp +92 345 8006009",
           "Our team will share pickup / replacement instructions",
         ],
-      },
-      {
-        type: "cta",
-        label: "Open Returns portal",
-        href: "/pages/returns-exchanges",
       },
       {
         type: "cta",

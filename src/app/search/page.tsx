@@ -1,26 +1,30 @@
-"use client";
-
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import type { Metadata } from "next";
 import { Suspense } from "react";
-import { products } from "@/features/products";
+import { productService } from "@/services/product.service";
 import ProductCard from "@/components/common/ProductCard";
 
-function SearchResults() {
-  const params = useSearchParams();
-  const q = (params.get("q") ?? "").trim();
+type Props = {
+  searchParams: Promise<{ q?: string }>;
+};
 
-  const results = useMemo(() => {
-    if (!q) return [];
-    const lower = q.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(lower) ||
-        p.tags?.some((t) => t.includes(lower)) ||
-        p.collection.some((c) => c.includes(lower)) ||
-        p.description?.toLowerCase().includes(lower)
-    );
-  }, [q]);
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Search",
+    description:
+      "Search Cyber Land products — laptops, gaming gear, hardware, and accessories.",
+    alternates: {
+      canonical: "/search",
+    },
+    robots: {
+      index: false,
+      follow: true,
+    },
+  };
+}
+
+async function Results({ q }: { q: string }) {
+  // Searches the real shop data source (WooCommerce with catalog fallback).
+  const results = q ? await productService.search(q) : [];
 
   return (
     <section className="section section--padding">
@@ -47,7 +51,10 @@ function SearchResults() {
   );
 }
 
-export default function SearchPage() {
+export default async function SearchPage({ searchParams }: Props) {
+  const { q: rawQuery } = await searchParams;
+  const q = (rawQuery ?? "").trim().slice(0, 100);
+
   return (
     <Suspense
       fallback={
@@ -56,7 +63,7 @@ export default function SearchPage() {
         </div>
       }
     >
-      <SearchResults />
+      <Results q={q} />
     </Suspense>
   );
 }

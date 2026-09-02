@@ -5,58 +5,43 @@ import type {
 } from "@/types";
 
 /**
- * Auth service — mock for clone; swap with real API later.
+ * Auth service — placeholder until a real authentication backend is connected.
+ *
+ * The previous implementation accepted ANY credentials and returned a fake
+ * session, which presented unauthenticated users with a fake "account".
+ * That behavior is disabled: these methods now throw so the UI can honestly
+ * tell customers that accounts are not available yet.
+ *
+ * To connect a real backend:
+ *  - point these methods at your auth API (e.g. /wp-json/jwt-auth/v1/token)
+ *  - store tokens server-side or in httpOnly cookies
+ *  - never fabricate sessions client-side.
  */
 export const authService = {
   async login(
     credentials: AuthCredentials
   ): Promise<{ user: User; token: string }> {
-    await delay(400);
-    if (!credentials.email || !credentials.password) {
-      throw new Error("Email and password are required");
-    }
-    return {
-      user: {
-        id: "user-1",
-        email: credentials.email,
-        firstName: "Cyber",
-        lastName: "Customer",
-      },
-      token: `mock-token-${Date.now()}`,
-    };
+    void credentials; // No backend connected yet.
+    throw new Error(
+      "Accounts are coming soon. Please continue as a guest — your cart is saved on this device."
+    );
   },
 
   async register(
     payload: RegisterPayload
   ): Promise<{ user: User; token: string }> {
-    await delay(500);
-    return {
-      user: {
-        id: `user-${Date.now()}`,
-        email: payload.email,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-      },
-      token: `mock-token-${Date.now()}`,
-    };
+    void payload; // No backend connected yet.
+    throw new Error(
+      "Accounts are coming soon. Please continue as a guest — your cart is saved on this device."
+    );
   },
 
   async logout(): Promise<void> {
-    await delay(100);
+    // No server session exists; nothing to invalidate.
   },
 
   async me(token: string | null): Promise<User | null> {
-    if (!token) return null;
-    await delay(200);
-    return {
-      id: "user-1",
-      email: "customer@cyberland.com",
-      firstName: "Cyber",
-      lastName: "Customer",
-    };
+    void token; // No backend connected yet: never fabricate a user.
+    return null;
   },
 };
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

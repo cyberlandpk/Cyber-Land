@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image, { type ImageProps } from "next/image";
 import { cn } from "@/utils";
 
@@ -13,6 +13,7 @@ type SafeImageProps = Omit<ImageProps, "onError" | "src"> & {
 
 /**
  * next/image wrapper with automatic fallback when remote/local src fails.
+ * Reacts to `src` prop changes: a new src resets the failure state.
  */
 export default function SafeImage({
   src,
@@ -21,8 +22,14 @@ export default function SafeImage({
   className,
   ...props
 }: SafeImageProps) {
-  const [currentSrc, setCurrentSrc] = useState(src || fallbackSrc);
   const [failed, setFailed] = useState(false);
+
+  // If the caller passes a different image, drop the stale failure state.
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  const currentSrc = failed ? fallbackSrc : src || fallbackSrc;
 
   const isRemote =
     typeof currentSrc === "string" &&
@@ -31,7 +38,7 @@ export default function SafeImage({
   return (
     <Image
       {...props}
-      src={failed ? fallbackSrc : currentSrc}
+      src={currentSrc}
       alt={alt}
       className={cn(className)}
       // Shopify CDN + remote assets load more reliably without optimizer
@@ -39,7 +46,6 @@ export default function SafeImage({
       onError={() => {
         if (!failed) {
           setFailed(true);
-          setCurrentSrc(fallbackSrc);
         }
       }}
     />

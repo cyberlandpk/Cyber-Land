@@ -273,6 +273,9 @@ function NavDropdown({
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
         aria-hidden={!open}
+        // Keep closed dropdowns out of the tab order and assistive tech.
+        // React 19 supports the boolean inert attribute natively.
+        {...(!open ? { inert: true } : {})}
       >
         <div className="nav-dropdown__container">
           <ul className="nav-dropdown__list" role="list">

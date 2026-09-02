@@ -2264,8 +2264,17 @@ button {
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
 }
 
+/* Reserve room so the fixed bar never covers page content */
+.has-sticky-atc {
+  padding-bottom: calc(clamp(2.25rem, 4vw, 4.5rem) + 5rem);
+}
+
 @media (min-width: 1024px) {
   .sticky-atc {
     display: none;
+  }
+
+  .has-sticky-atc {
+    padding-bottom: clamp(2.25rem, 4vw, 4.5rem);
   }
 }

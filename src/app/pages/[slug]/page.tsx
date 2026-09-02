@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       page?.subtitle ??
       (firstPara && firstPara.type === "p" ? firstPara.text : undefined),
+    alternates: page ? { canonical: `/pages/${slug}` } : undefined,
   };
 }
 

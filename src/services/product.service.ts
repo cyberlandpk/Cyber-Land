@@ -1,39 +1,102 @@
-import type { Product, ProductFilters } from "@/types";
+import type { Product } from "@/types";
 import {
   collectionMeta,
-  getProductsByCollection,
   products,
 } from "@/features/products/data/catalog";
 import { woocommerceService } from "./woocommerce.service";
 
 /**
  * Product service — all product data access goes through here.
- * Connects directly to WooCommerce REST API when configured in .env.local,
- * with fallback to local catalog.
+ *
+ * Deterministic data-source strategy:
+ * 1. When WooCommerce is configured, it is the PRIMARY source.
+ * 2. The local catalog is merged in (deduplicated by handle) so demo
+ *    products remain reachable and "related products" keep working across
+ *    both sources.
+ * 3. If WooCommerce fails, everything falls back to the local catalog.
  */
+
+/** Merge two product lists, deduplicating by handle (first occurrence wins). */
+function mergeProducts(primary: Product[], secondary: Product[]): Product[] {
+  const seen = new Set<string>();
+  const out: Product[] = [];
+  for (const p of [...primary, ...secondary]) {
+    const key = (p.handle || p.id).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
+}
+
+/** Fetch the merged catalog (Woo primary + local), or local-only on failure. */
+async function getCatalog(): Promise<Product[]> {
+  if (woocommerceService.isConfigured()) {
+    try {
+      const wcProducts = await woocommerceService.getProducts();
+      // Woo is primary; local catalog fills in any handles Woo doesn't have.
+      return mergeProducts(wcProducts, products);
+    } catch (err) {
+      console.warn("WooCommerce API fetch failed, using catalog fallback:", err);
+    }
+  }
+  return [...products];
+}
+
+/** Deterministic, slug-based collection matching (no title heuristics). */
+function matchesCollection(product: Product, handle: string): boolean {
+  const h = handle.toLowerCase();
+  const cols = product.collection.map((c) => c.toLowerCase());
+  const tags = (product.tags ?? []).map((t) => t.toLowerCase());
+
+  if (cols.includes(h)) return true;
+
+  // Alias groups map to the exact slugs used by the store.
+  const ALIASES: Record<string, string[]> = {
+    "shop-all": ["all", "products"],
+    all: ["products"],
+    products: ["all"],
+    laptops: ["new-laptops", "used-laptops"],
+    "new-laptops": ["laptops"],
+    "used-laptops": ["laptops"],
+    cpu: ["new-cpu", "used-cpu"],
+    "new-cpu": ["cpu"],
+    "used-cpu": ["cpu"],
+    "gaming-mouse-and-mousepad": ["mouse-mousepads", "mouse"],
+    "mouse-and-mousepads": ["gaming-mouse-and-mousepad"],
+  };
+
+  // A parent collection shows child collection products (laptops ⊃ new-laptops).
+  const childAliases = ALIASES[h];
+  if (childAliases?.some((a) => cols.includes(a) || tags.includes(a))) {
+    return true;
+  }
+
+  // Exact tag match is a legitimate, store-assigned signal.
+  if (tags.includes(h)) return true;
+
+  return false;
+}
+
 export const productService = {
   async getAll(): Promise<Product[]> {
-    if (woocommerceService.isConfigured()) {
-      try {
-        const wcProducts = await woocommerceService.getProducts();
-        if (wcProducts.length > 0) return wcProducts;
-      } catch (err) {
-        console.warn("WooCommerce API fetch failed, using catalog fallback:", err);
-      }
-    }
-    return [...products];
+    return getCatalog();
   },
 
   async getByHandle(handle: string): Promise<Product | null> {
+    const h = handle.toLowerCase();
     if (woocommerceService.isConfigured()) {
       try {
         const wcProducts = await woocommerceService.getProducts({ slug: handle });
         if (wcProducts.length > 0) return wcProducts[0];
       } catch (err) {
-        console.warn("WooCommerce API getByHandle failed, using catalog fallback:", err);
+        console.warn(
+          "WooCommerce API getByHandle failed, using catalog fallback:",
+          err
+        );
       }
     }
-    return products.find((p) => p.handle === handle) ?? null;
+    return products.find((p) => p.handle.toLowerCase() === h) ?? null;
   },
 
   async getById(id: string): Promise<Product | null> {
@@ -49,115 +112,43 @@ export const productService = {
   },
 
   async getByCollection(handle: string): Promise<Product[]> {
-    if (woocommerceService.isConfigured()) {
-      try {
-        const allWc = await woocommerceService.getProducts();
-        if (allWc.length > 0) {
-          const h = handle.toLowerCase();
-          if (h === "all" || h === "shop-all" || h === "products") {
-            return allWc;
-          }
-          const matched = allWc.filter((p) => {
-            const cols = p.collection.map((c) => c.toLowerCase());
-            const tags = (p.tags || []).map((t) => t.toLowerCase());
-            const titleLower = p.title.toLowerCase();
+    const h = handle.toLowerCase();
 
-            if (h === "new-laptops") {
-              return (
-                cols.includes("new-laptops") ||
-                cols.includes("new laptops") ||
-                tags.includes("new") ||
-                tags.includes("new-laptops") ||
-                titleLower.includes("new laptop") ||
-                (cols.includes("laptops") && !cols.includes("used-laptops") && !tags.includes("used"))
-              );
-            }
-
-            if (h === "used-laptops") {
-              return (
-                cols.includes("used-laptops") ||
-                cols.includes("used laptops") ||
-                tags.includes("used") ||
-                tags.includes("used-laptops") ||
-                tags.includes("refurbished") ||
-                titleLower.includes("used") ||
-                titleLower.includes("refurbished")
-              );
-            }
-
-            if (h === "laptops") {
-              return (
-                cols.includes("laptops") ||
-                cols.includes("new-laptops") ||
-                cols.includes("used-laptops") ||
-                titleLower.includes("laptop")
-              );
-            }
-
-            if (h === "new-cpu") {
-              return (
-                cols.includes("new-cpu") ||
-                cols.includes("new cpu") ||
-                (cols.includes("cpu") && (tags.includes("new") || !cols.includes("used-cpu"))) ||
-                titleLower.includes("new cpu") ||
-                titleLower.includes("new processor")
-              );
-            }
-
-            if (h === "used-cpu") {
-              return (
-                cols.includes("used-cpu") ||
-                cols.includes("used cpu") ||
-                (cols.includes("cpu") && (tags.includes("used") || tags.includes("refurbished"))) ||
-                titleLower.includes("used cpu") ||
-                titleLower.includes("used processor")
-              );
-            }
-
-            if (h === "cpu" || h === "cpus" || h === "processors") {
-              return (
-                cols.includes("cpu") ||
-                cols.includes("cpus") ||
-                cols.includes("new-cpu") ||
-                cols.includes("used-cpu") ||
-                cols.includes("processors") ||
-                titleLower.includes("processor") ||
-                titleLower.includes("cpu") ||
-                titleLower.includes("intel core") ||
-                titleLower.includes("ryzen")
-              );
-            }
-
-            return (
-              cols.some((c) => c === h) ||
-              tags.some((t) => t === h) ||
-              p.handle.toLowerCase().includes(h) ||
-              titleLower.includes(h)
-            );
-          });
-          return matched;
-        }
-      } catch (err) {
-        console.warn("WooCommerce API getByCollection failed, using catalog fallback:", err);
-      }
+    // "all" / "shop-all" / "products" always show the full merged catalog.
+    if (h === "all" || h === "shop-all" || h === "products") {
+      return getCatalog();
     }
-    return getProductsByCollection(handle);
+
+    const all = await getCatalog();
+    return all.filter((p) => matchesCollection(p, h));
   },
 
-  listCollections() {
-    return Object.entries(collectionMeta).map(([handle, meta]) => ({
-      handle,
-      ...meta,
-    }));
+  async getCollectionCounts(): Promise<Record<string, number>> {
+    const handles = Object.keys(collectionMeta);
+    const all = await getCatalog();
+    const counts: Record<string, number> = {};
+    for (const handle of handles) {
+      const h = handle.toLowerCase();
+      if (h === "all" || h === "shop-all" || h === "products") {
+        counts[handle] = all.length;
+        continue;
+      }
+      counts[handle] = all.filter((p) => matchesCollection(p, h)).length;
+    }
+    return counts;
   },
 
   async getRelated(product: Product, limit = 4): Promise<Product[]> {
-    const all = await this.getAll();
+    // Related products are computed from the SAME merged catalog the product
+    // itself came from, so Woo and local products can reference each other.
+    const all = await getCatalog();
     return all
       .filter(
         (p) =>
           p.id !== product.id &&
-          p.collection.some((c) => product.collection.includes(c))
+          p.collection.some((c) =>
+            product.collection.map((x) => x.toLowerCase()).includes(c.toLowerCase())
+          )
       )
       .slice(0, limit);
   },
@@ -166,58 +157,28 @@ export const productService = {
     const q = query.trim().toLowerCase();
     if (!q) return [];
 
+    // 1. Ask WooCommerce first (the real shop source).
+    const wcResults: Product[] = [];
     if (woocommerceService.isConfigured()) {
       try {
         const wcProducts = await woocommerceService.getProducts({ search: query });
-        if (wcProducts.length > 0) return wcProducts;
+        wcResults.push(...wcProducts);
       } catch (err) {
         console.warn("WooCommerce search API failed, using catalog fallback:", err);
       }
     }
 
-    const all = await this.getAll();
-    return all.filter(
+    // 2. Merge with local-catalog matches, deduplicated by handle.
+    const all = await getCatalog();
+    const localMatches = all.filter(
       (p) =>
         p.title.toLowerCase().includes(q) ||
         p.tags?.some((t) => t.includes(q)) ||
         p.collection.some((c) => c.includes(q)) ||
         p.description?.toLowerCase().includes(q)
     );
-  },
 
-  async filterProducts(
-    list: Product[],
-    filters: ProductFilters
-  ): Promise<Product[]> {
-    let result = [...list];
-    if (filters.inStockOnly) {
-      result = result.filter((p) => p.available);
-    }
-    if (filters.minPrice != null) {
-      result = result.filter((p) => p.price >= filters.minPrice!);
-    }
-    if (filters.maxPrice != null) {
-      result = result.filter((p) => p.price <= filters.maxPrice!);
-    }
-    if (filters.tags?.length) {
-      result = result.filter((p) =>
-        filters.tags!.some((t) => p.tags?.includes(t))
-      );
-    }
-    switch (filters.sort) {
-      case "price-asc":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case "name":
-        result.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      default:
-        break;
-    }
-    return result;
+    return mergeProducts(wcResults, localMatches);
   },
 
   getCollectionMeta(handle: string) {
@@ -228,13 +189,5 @@ export const productService = {
           .replace(/\b\w/g, (c) => c.toUpperCase()),
       }
     );
-  },
-
-  getAllHandles(): string[] {
-    return products.map((p) => p.handle);
-  },
-
-  getCollectionHandles(): string[] {
-    return Object.keys(collectionMeta);
   },
 };

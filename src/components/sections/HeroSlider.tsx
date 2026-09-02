@@ -16,7 +16,7 @@ import { cn } from "@/utils";
 const SLIDES = [
   {
     id: 1,
-    href: "/products/anzu-v2-black-ultralight-ergonomic-wireless-gaming-mouse",
+    href: "/collections/gaming-mouse-and-mousepad",
     alt: "Anzu V2 New Launch",
     desktop: "/hero/1-anzu-crimson.png",
     mobile: "/hero/1-anzu-m-crimson.png",
@@ -42,8 +42,8 @@ const SLIDES = [
   },
   {
     id: 3,
-    href: "/products/arma-black-ultralight-gaming-mouse",
-    alt: "Arma Ultralight Mouse",
+    href: "/collections/gaming-mouse-and-mousepad",
+    alt: "Ultralight Gaming Mice",
     desktop: "/hero/3-arma-crimson.png",
     mobile: "/hero/3-arma-m-crimson.png",
     desktopAlt: "/hero/arma-desktop.png",

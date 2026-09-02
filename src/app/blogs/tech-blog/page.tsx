@@ -4,6 +4,9 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Cyber Land Blog",
   description: "News, launches, setup guides, and creator stories from Cyber Land.",
+  alternates: {
+    canonical: "/blogs/tech-blog",
+  },
 };
 
 const posts = [

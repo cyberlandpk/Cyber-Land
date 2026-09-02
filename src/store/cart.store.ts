@@ -2,8 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartItem, CartTotals, Product } from "@/types";
-import { siteConfig } from "@/config/site";
+import type { CartItem, Product } from "@/types";
 import { STORAGE_KEYS } from "@/constants/storage";
 
 interface CartState {
@@ -20,7 +19,6 @@ interface CartState {
     variant?: string
   ) => void;
   clearCart: () => void;
-  getTotals: () => CartTotals;
 }
 
 function matchItem(item: CartItem, productId: string, variant?: string) {
@@ -76,25 +74,6 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => set({ items: [] }),
-
-      getTotals: () => {
-        const { items } = get();
-        const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-        const subtotal = items.reduce(
-          (sum, i) => sum + i.product.price * i.quantity,
-          0
-        );
-        const threshold = siteConfig.freeShippingThreshold;
-        const remaining = Math.max(0, threshold - subtotal);
-        const progress = Math.min(100, (subtotal / threshold) * 100);
-        return {
-          itemCount,
-          subtotal,
-          freeShippingThreshold: threshold,
-          remainingForFreeShipping: remaining,
-          freeShippingProgress: progress,
-        };
-      },
     }),
     {
       name: STORAGE_KEYS.cart,

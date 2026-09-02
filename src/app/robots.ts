@@ -8,10 +8,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/checkout", "/account"],
+        // Utility/private routes that shouldn't be indexed. These routes
+        // exist in the app; there is no /api/ route group to disallow.
+        disallow: ["/cart", "/checkout", "/account", "/search"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
-    host: base,
   };
 }

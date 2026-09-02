@@ -14,6 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: meta.title,
     description: meta.description,
+    alternates: {
+      canonical: `/collections/${handle}`,
+    },
   };
 }
 
@@ -26,8 +29,8 @@ export default async function CollectionPage({ params }: Props) {
     <CollectionView
       title={meta.title}
       description={meta.description}
+      categoryHandle={handle}
       products={items}
-      handle={handle}
     />
   );
 }

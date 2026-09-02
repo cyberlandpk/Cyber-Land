@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "clean": "Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue",
+    "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
     "verify": "npm run type-check && npm run lint && npm run build"
   },
   "engines": {

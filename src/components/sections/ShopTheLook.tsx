@@ -123,6 +123,8 @@ export default function ShopTheLook() {
 
   const activeProduct = products[activeIndex] ?? products[0];
 
+  if (!products.length || !activeProduct) return null;
+
   const selectByHandle = (handle: string, fallbackHandle: string) => {
     const idx = HOTSPOTS.findIndex(
       (h) => h.handle === handle || h.fallbackHandle === fallbackHandle

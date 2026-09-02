@@ -1,51 +1,60 @@
-import type { CheckoutPayload, CheckoutResult } from "@/types";
+import type {
+  CheckoutPayload,
+  CheckoutResult,
+} from "@/types";
+import type { CartItem } from "@/types";
 
 /**
- * Checkout service — mock order placement for clone.
+ * Checkout service — creates real orders through the server API route
+ * (/api/checkout), which talks to WooCommerce with server-only credentials.
+ *
+ * WhatsApp is used purely as an optional follow-up notification for the store
+ * owner — it is never the order database.
  */
 export const checkoutService = {
   async placeOrder(
     payload: CheckoutPayload,
-    total: number
+    items: CartItem[],
+    totals: { subtotal: number; shipping: number }
   ): Promise<CheckoutResult> {
-    const { shipping, paymentMethod, note } = payload;
-    
-    // Construct WhatsApp message
-    let message = `*New Order*\n\n`;
-    message += `*Customer Info:*\n`;
-    message += `Name: ${shipping.fullName}\n`;
-    message += `Contact: ${shipping.contactInfo}\n`;
-    message += `Address: ${shipping.address}, ${shipping.city}, ${shipping.provinceState}\n\n`;
-    
-    if (note) {
-      message += `*Order Notes:*\n${note}\n\n`;
-    }
-    
-    message += `*Order Total:* Rs. ${total.toLocaleString()}\n`;
-    message += `*Payment Method:* ${paymentMethod}\n`;
+    const response = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        shipping: payload.shipping,
+        paymentMethod: payload.paymentMethod,
+        note: payload.note,
+        items: items.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          variant: item.variant,
+        })),
+      }),
+    });
 
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/923458006009?text=${encodedMessage}`;
-    
-    // In a real app we'd redirect or use window.open
-    if (typeof window !== "undefined") {
-      window.location.href = whatsappUrl;
+    let data: { orderId?: string; status?: string; error?: string } = {};
+    try {
+      data = (await response.json()) as typeof data;
+    } catch {
+      data = {};
+    }
+
+    if (!response.ok || !data.orderId) {
+      throw new Error(
+        data.error ?? "We could not place your order. Please try again."
+      );
     }
 
     return {
-      orderId: `WA-${Date.now()}`,
+      orderId: data.orderId,
       status: "confirmed",
-      total,
+      total: totals.subtotal + totals.shipping,
     };
   },
 
-  async estimateShipping(
-    postalCode: string,
-    country = "PK"
-  ): Promise<{ amount: number; etaDays: number }> {
-    void postalCode;
-    void country;
-    await new Promise((r) => setTimeout(r, 300));
-    return { amount: 0, etaDays: 3 };
+  /** Optional WhatsApp follow-up link the customer can use to reach support. */
+  buildWhatsAppFollowUp(orderId: string): string {
+    const message = `Hi Cyber Land, I placed order #${orderId} on your website and have a question about it.`;
+    return `https://wa.me/923458006009?text=${encodeURIComponent(message)}`;
   },
 };

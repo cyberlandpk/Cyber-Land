@@ -8,6 +8,7 @@ import { Star, Truck, RotateCcw, Shield } from "lucide-react";
 import type { Product } from "@/types";
 import { useCart } from "@/hooks/useCart";
 import { calcDiscount, cn, formatPrice } from "@/utils";
+import RichText from "@/components/common/RichText";
 
 type Props = { product: Product };
 
@@ -23,11 +24,12 @@ export default function ProductDetail({ product }: Props) {
   const images = useMemo(() => {
     const list = product.images?.length
       ? product.images
-      : [product.image, product.hoverImage].filter(Boolean) as string[];
-    // Duplicate primary for gallery feel if only one image
-    if (list.length === 1) return [list[0], list[0], list[0]];
-    return list;
+      : ([product.image, product.hoverImage].filter(Boolean) as string[]);
+    return list.length ? list : [product.image];
   }, [product]);
+
+  // Keep the selected index valid if the image list shrinks.
+  const activeImageSafe = Math.min(activeImage, images.length - 1);
 
   const discount = calcDiscount(product.price, product.compareAtPrice);
 
@@ -43,7 +45,14 @@ export default function ProductDetail({ product }: Props) {
   };
 
   return (
-    <section className="section section--padding">
+    <section
+      className={cn(
+        "section section--padding",
+        // Reserve space for the fixed mobile sticky ATC bar so it never
+        // covers the last content on small screens.
+        product.available && "has-sticky-atc"
+      )}
+    >
       <div className="page-width">
         {/* Breadcrumb */}
         <nav className="mb-4 text-xs text-black/50 md:mb-6 md:text-sm" aria-label="Breadcrumb">
@@ -81,7 +90,7 @@ export default function ProductDetail({ product }: Props) {
                 <span className="badge-save">Save {discount}%</span>
               ) : null}
               <Image
-                src={images[activeImage]}
+                src={images[activeImageSafe]}
                 alt={product.title}
                 fill
                 className="object-cover"
@@ -90,25 +99,27 @@ export default function ProductDetail({ product }: Props) {
                 unoptimized
               />
             </div>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={cn("product-thumb relative", i === activeImage && "active")}
-                  onClick={() => setActiveImage(i)}
-                >
-                  <Image
-                    src={img}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                    unoptimized
-                  />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                {images.map((img, i) => (
+                  <button
+                    key={`${img}-${i}`}
+                    type="button"
+                    className={cn("product-thumb relative", i === activeImageSafe && "active")}
+                    onClick={() => setActiveImage(i)}
+                  >
+                    <Image
+                      src={img}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                      unoptimized
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Info */}
@@ -161,10 +172,9 @@ export default function ProductDetail({ product }: Props) {
             </p>
 
             {product.description && (
-              <div
-                className="mt-5 text-sm leading-relaxed text-black/75 md:text-base space-y-2 [&_p]:mb-1.5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:font-semibold [&_strong]:text-black"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
+              <div className="mt-5 space-y-2 text-sm leading-relaxed text-black/75 md:text-base">
+                <RichText html={product.description} />
+              </div>
             )}
 
             {product.hasVariants && (
@@ -233,9 +243,16 @@ export default function ProductDetail({ product }: Props) {
                   </button>
                 </>
               ) : (
-                <button type="button" className="btn btn-secondary flex-1">
-                  Notify me when it&apos;s available
-                </button>
+                <a
+                  href={`https://wa.me/923458006009?text=${encodeURIComponent(
+                    `Hi Cyber Land, is "${product.title}" back in stock?`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary flex-1"
+                >
+                  Ask about availability
+                </a>
               )}
             </div>
 

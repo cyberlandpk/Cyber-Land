@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { products } from "@/features/products";
+import { useProductSearch } from "@/features/products/hooks/useProducts";
+import type { Product } from "@/types";
 import { useUI } from "@/hooks/useUI";
 import { formatPrice, calcDiscount } from "@/utils";
 
@@ -13,13 +14,27 @@ const EASE_DRAWER: [number, number, number, number] = [0.7, 0, 0.2, 1];
 export default function SearchDrawer() {
   const { searchOpen, closeSearch } = useUI();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Debounce the query so we hit the search service at most twice a second.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [query]);
+
+  // Searches the real shop data source (WooCommerce with catalog fallback).
+  const { data, isFetching } = useProductSearch(debouncedQuery);
+  const results: Product[] = data ?? [];
 
   useEffect(() => {
     if (searchOpen) {
       setTimeout(() => inputRef.current?.focus(), 120);
     } else {
       setQuery("");
+      setDebouncedQuery("");
     }
   }, [searchOpen]);
 
@@ -31,19 +46,6 @@ export default function SearchDrawer() {
       document.body.style.overflow = prev;
     };
   }, [searchOpen]);
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return products
-      .filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.tags?.some((t) => t.includes(q)) ||
-          p.collection.some((c) => c.includes(q))
-      )
-      .slice(0, 8);
-  }, [query]);
 
   return (
     <AnimatePresence>
@@ -120,7 +122,11 @@ export default function SearchDrawer() {
 
               {query ? (
                 <div className="search-results">
-                  {results.length === 0 ? (
+                  {isFetching && results.length === 0 ? (
+                    <p className="search-results__hint" aria-live="polite">
+                      Searching…
+                    </p>
+                  ) : results.length === 0 ? (
                     <p className="search-results__empty">
                       No products found for &ldquo;{query}&rdquo;
                     </p>

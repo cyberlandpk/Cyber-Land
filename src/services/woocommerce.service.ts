@@ -44,7 +44,8 @@ export function mapWooProductToAppProduct(wcProduct: WooCommerceRawProduct): Pro
     image: primaryImg,
     hoverImage: hoverImg,
     images: imageList.length ? imageList : [primaryImg],
-    rating: Number(wcProduct.average_rating || 5),
+    // Truthful rating: only present when the store actually has one.
+    rating: wcProduct.average_rating ? Number(wcProduct.average_rating) : undefined,
     reviewCount: Number(wcProduct.rating_count || 0),
     available: wcProduct.stock_status === "instock",
     hasVariants: Boolean(wcProduct.variations?.length),
@@ -76,6 +77,17 @@ function buildQuery(params: Record<string, unknown>) {
   return query.toString();
 }
 
+/**
+ * HTTP Basic auth header for WooCommerce REST API.
+ * Keeps credentials out of URLs so they never appear in logs, dev payloads, or RSC flight data.
+ */
+function buildAuthHeaders(): Record<string, string> {
+  const token = Buffer.from(
+    `${env.wcConsumerKey}:${env.wcConsumerSecret}`
+  ).toString("base64");
+  return { Authorization: `Basic ${token}` };
+}
+
 async function requestJson<T>(
   url: string,
   method: "GET" | "POST",
@@ -90,12 +102,13 @@ async function requestJson<T>(
       headers: {
         "User-Agent": "CyberLand-NextJS/1.0",
         Accept: "application/json",
+        ...buildAuthHeaders(),
       },
     });
 
     return response.data as T;
-  } catch (err: any) {
-    if (err.response?.status) {
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status) {
       throw new WooCommerceRequestError(
         `WooCommerce request failed with status ${err.response.status}`,
         err.response.status
@@ -111,20 +124,15 @@ async function wcRequest<T = unknown>(
   dataOrParams?: Record<string, unknown>
 ): Promise<T> {
   const baseUrl = getCleanBaseUrl();
-  const authParams = {
-    consumer_key: env.wcConsumerKey,
-    consumer_secret: env.wcConsumerSecret,
-  };
 
   // Try Pretty Permalink endpoint first
   try {
     const baseEndpoint = `${baseUrl}/wp-json/wc/v3${endpoint}`;
     if (method === "GET") {
-      const query = buildQuery({ ...dataOrParams, ...authParams });
+      const query = buildQuery({ ...dataOrParams });
       return requestJson<T>(`${baseEndpoint}?${query}`, method);
     }
-    const query = buildQuery(authParams);
-    return requestJson<T>(`${baseEndpoint}?${query}`, method, dataOrParams);
+    return requestJson<T>(baseEndpoint, method, dataOrParams);
   } catch (err: unknown) {
     if (err instanceof WooCommerceRequestError && err.status === 404) {
       // Fallback for Plain Permalinks via ?rest_route=
@@ -133,14 +141,10 @@ async function wcRequest<T = unknown>(
         const query = buildQuery({
           rest_route: `/wc/v3${endpoint}`,
           ...dataOrParams,
-          ...authParams,
         });
         return requestJson<T>(`${fallbackUrl}?${query}`, method);
       }
-      const query = buildQuery({
-        rest_route: `/wc/v3${endpoint}`,
-        ...authParams,
-      });
+      const query = buildQuery({ rest_route: `/wc/v3${endpoint}` });
       return requestJson<T>(`${fallbackUrl}?${query}`, method, dataOrParams);
     }
     throw err;
@@ -180,16 +184,6 @@ export const woocommerceService = {
     }
     const raw = await wcRequest<WooCommerceRawProduct>("GET", `/products/${id}`);
     return mapWooProductToAppProduct(raw);
-  },
-
-  /**
-   * Fetch categories from WooCommerce
-   */
-  async getCategories() {
-    if (!this.isConfigured()) {
-      throw new Error("WooCommerce URL is not configured yet in .env.local");
-    }
-    return wcRequest("GET", "/products/categories");
   },
 
   /**

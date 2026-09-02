@@ -1,13 +1,7 @@
-export type NavChild = {
-  label: string;
-  href: string;
-};
+import type { NavChild, NavItem } from "@/types/navigation";
 
-export type NavItem = {
-  label: string;
-  href: string;
-  children?: NavChild[];
-};
+// Re-exported for convenience so existing imports keep working.
+export type { NavChild, NavItem };
 
 /**
  * Primary desktop/mobile menu — exact order from live header.
@@ -147,7 +141,7 @@ export const announcements = [
   {
     text: "ANZU V2 NEW LAUNCH",
     textMobile: "ANZU V2 NEW LAUNCH",
-    href: "/products/anzu-v2-black-ultralight-ergonomic-wireless-gaming-mouse",
+    href: "/collections/gaming-mouse-and-mousepad",
   },
   {
     text: "Freebies on orders above Rs.5000",

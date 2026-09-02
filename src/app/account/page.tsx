@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function AccountPage() {
+  // Auth backend is not connected yet — no fake sessions are created.
+  // isAuthent isAuthenticated will only ever be true if a real backend sets it.
   const { user, isAuthenticated, logout } = useAuthStore();
 
   if (!isAuthenticated || !user) {
@@ -12,14 +14,15 @@ export default function AccountPage() {
         <div className="page-width max-w-md py-12 text-center">
           <h1 className="section-title mb-3">Account</h1>
           <p className="mb-6 text-sm text-black/60">
-            Log in to view orders, wishlist, and saved details.
+            Accounts are coming soon. You can shop and check out as a guest —
+            your cart is saved on this device.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link href="/account/login" className="btn btn-primary">
-              Log in
+            <Link href="/collections/shop-all" className="btn btn-primary">
+              Continue shopping
             </Link>
-            <Link href="/account/register" className="btn btn-secondary">
-              Create account
+            <Link href="/pages/track-order" className="btn btn-secondary">
+              Track an order
             </Link>
           </div>
         </div>
@@ -35,16 +38,6 @@ export default function AccountPage() {
           Signed in as {user.email}
         </p>
         <ul className="mb-8 flex flex-col gap-3 text-sm font-medium">
-          <li>
-            <Link href="/pages/wishlist" className="reversed-link">
-              Wishlist
-            </Link>
-          </li>
-          <li>
-            <Link href="/pages/track-order" className="reversed-link">
-              Track order
-            </Link>
-          </li>
           <li>
             <Link href="/cart" className="reversed-link">
               Cart

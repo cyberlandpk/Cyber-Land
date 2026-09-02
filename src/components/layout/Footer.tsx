@@ -143,7 +143,7 @@ export default function Footer() {
       <div className="footer-copyright">
         <div className="page-width footer-copyright__inner flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <p className="text-xs text-white/60">
-            © 2026 Cyber Land. All rights reserved. <span className="mx-1.5 text-white/30">|</span> Powered by{" "}
+            © {new Date().getFullYear()} Cyber Land. All rights reserved. <span className="mx-1.5 text-white/30">|</span> Powered by{" "}
             <span className="font-bold text-white tracking-wide">BSH Solutions</span>
           </p>
           <ul className="flex flex-wrap items-center gap-4 text-xs">

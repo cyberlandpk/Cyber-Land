@@ -18,6 +18,42 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Important: dev and build don't mix
+
+`next dev` and `next build` share the `.next` directory. Running both at the
+same time corrupts the build output (`Cannot find module for page: /_error`,
+missing `required-server-files.json`). Before building:
+
+```bash
+# Stop the dev server first, then:
+npm run clean     # cross-platform removal of .next
+npm run build
+```
+
+## WooCommerce integration
+
+Product data comes from the WooCommerce REST API when configured; a small local
+catalog is merged in as a fallback. Configure via `.env.local` (never commit
+real keys — they are git-ignored):
+
+```
+NEXT_PUBLIC_WORDPRESS_URL=https://your-store.example.com
+WC_CONSUMER_KEY=ck_...
+WC_CONSUMER_SECRET=cs_...
+```
+
+WooCommerce credentials are used **server-side only** (HTTP Basic auth header)
+and never appear in client code, HTML, or URLs.
+
+### Store maintenance scripts
+
+```bash
+node --env-file=.env.local scripts/test-backend.mjs
+node --env-file=.env.local scripts/create-subcategories.mjs
+```
+
+Scripts read credentials from the environment only and never log secret values.
+
 ## Quality gates (must pass before deploy)
 
 ```bash

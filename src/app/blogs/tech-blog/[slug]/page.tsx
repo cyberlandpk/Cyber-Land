@@ -49,7 +49,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = posts[slug];
-  return { title: post?.title ?? "Blog" };
+  return {
+    title: post?.title ?? "Blog",
+    description: post ? post.body[0] : undefined,
+    alternates: post ? { canonical: `/blogs/tech-blog/${slug}` } : undefined,
+  };
 }
 
 export default async function BlogPostPage({ params }: Props) {

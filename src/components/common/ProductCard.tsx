@@ -19,14 +19,15 @@ export default function ProductCard({ product, className, priority }: Props) {
 
   const cta = () => {
     if (!product.available) {
-
+      // No notification backend exists — link to the product so customers can
+      // view details and contact support instead of a dead "notify" flow.
       return (
         <Link
-          href={`/products/${product.handle}?notify=1`}
+          href={`/products/${product.handle}`}
           className="btn btn-secondary btn-sm product-card__cta"
           onClick={(e) => e.stopPropagation()}
         >
-          Notify me when it&apos;s available
+          View details
         </Link>
       );
     }
@@ -61,6 +62,8 @@ export default function ProductCard({ product, className, priority }: Props) {
       <div className="product-card__media">
         {!product.available ? (
           <span className="badge-oos">Out of stock</span>
+        ) : product.badge ? (
+          <span className="badge-save">{product.badge}</span>
         ) : discount > 0 ? (
           <span className="badge-save">Save {discount}%</span>
         ) : null}
