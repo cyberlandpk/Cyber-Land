@@ -1,4 +1,5 @@
 import HeroSlider from "@/components/sections/HeroSlider";
+import CategoryGrid from "@/components/sections/CategoryGrid";
 import ShopTheLook from "@/components/sections/ShopTheLook";
 import ProductSection from "@/components/sections/ProductSection";
 import { woocommerceService } from "@/services/woocommerce.service";
@@ -20,6 +21,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSlider />
+      <CategoryGrid />
       {liveProducts.length > 0 && (
         <ProductSection
           title="Featured Products"
