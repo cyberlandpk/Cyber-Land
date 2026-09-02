@@ -10,16 +10,21 @@ export const revalidate = 0;
 
 type Props = { params: Promise<{ handle: string }> };
 
+function stripHtml(html: string = ""): string {
+  return html.replace(/<[^>]*>?/gm, " ").replace(/\s+/g, " ").trim();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;
   const product = await productService.getByHandle(handle);
   if (!product) return { title: "Product not found" };
+  const cleanDescription = stripHtml(product.description || "");
   return {
     title: product.title,
-    description: product.description,
+    description: cleanDescription,
     openGraph: {
       title: product.title,
-      description: product.description,
+      description: cleanDescription,
       images: [product.image],
     },
   };

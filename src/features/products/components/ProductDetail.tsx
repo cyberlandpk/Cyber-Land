@@ -161,9 +161,10 @@ export default function ProductDetail({ product }: Props) {
             </p>
 
             {product.description && (
-              <p className="mt-5 text-sm leading-relaxed text-black/70 md:text-base">
-                {product.description}
-              </p>
+              <div
+                className="mt-5 text-sm leading-relaxed text-black/75 md:text-base space-y-2 [&_p]:mb-1.5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:font-semibold [&_strong]:text-black"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             )}
 
             {product.hasVariants && (

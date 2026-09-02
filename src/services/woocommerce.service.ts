@@ -1,3 +1,4 @@
+import axios from "axios";
 import { env } from "@/config/env";
 import type { Product } from "@/types";
 
@@ -80,21 +81,28 @@ async function requestJson<T>(
   method: "GET" | "POST",
   body?: Record<string, unknown>
 ): Promise<T> {
-  const response = await fetch(url, {
-    method,
-    headers: method === "POST" ? { "Content-Type": "application/json" } : undefined,
-    body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
-    cache: "no-store",
-  });
+  try {
+    const response = await axios({
+      url,
+      method,
+      data: body,
+      timeout: 10000,
+      headers: {
+        "User-Agent": "CyberLand-NextJS/1.0",
+        Accept: "application/json",
+      },
+    });
 
-  if (!response.ok) {
-    throw new WooCommerceRequestError(
-      `WooCommerce request failed with status ${response.status}`,
-      response.status
-    );
+    return response.data as T;
+  } catch (err: any) {
+    if (err.response?.status) {
+      throw new WooCommerceRequestError(
+        `WooCommerce request failed with status ${err.response.status}`,
+        err.response.status
+      );
+    }
+    throw err;
   }
-
-  return response.json() as Promise<T>;
 }
 
 async function wcRequest<T = unknown>(
