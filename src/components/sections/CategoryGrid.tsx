@@ -69,23 +69,24 @@ export default function CategoryGrid() {
             >
               <Link
                 href={`/collections/${cat.slug}`}
-                className="group relative block overflow-hidden rounded-[22px] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group relative block overflow-hidden rounded-[22px] border border-black/10 bg-neutral-900 transition-all duration-300 hover:-translate-y-1 hover:border-[#BC0000]/60 hover:shadow-[0_16px_36px_rgba(188,0,0,0.22)]"
                 style={{ aspectRatio: "4 / 3" }}
               >
                 <SafeImage
                   src={cat.image}
                   alt={cat.name}
                   fill
+                  priority={i < 4}
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-white/75">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent transition-colors duration-300 group-hover:from-[#250000]/95" />
+                <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4">
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-2.5 py-0.5 text-[11px] font-bold text-white/90 backdrop-blur-md transition-colors group-hover:border-red-500/40 group-hover:text-red-200">
                     <span>{cat.icon}</span>
                     <span>{cat.subcategories.length} Categories</span>
                   </div>
-                  <h3 className="mt-0.5 text-base font-extrabold leading-tight text-white transition-colors group-hover:text-[#FFC5C5]">
+                  <h3 className="mt-1.5 text-sm font-extrabold leading-tight text-white transition-colors group-hover:text-[#FFC5C5] sm:text-base">
                     {cat.name}
                   </h3>
                 </div>
