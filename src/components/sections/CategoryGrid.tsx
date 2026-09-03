@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import SafeImage from "@/components/common/SafeImage";
 import { DEPARTMENT_GROUPS } from "@/constants/categories-data";
 
@@ -69,26 +70,33 @@ export default function CategoryGrid() {
             >
               <Link
                 href={`/collections/${cat.slug}`}
-                className="group relative block overflow-hidden rounded-[22px] border border-black/10 bg-neutral-900 transition-all duration-300 hover:-translate-y-1 hover:border-[#BC0000]/60 hover:shadow-[0_16px_36px_rgba(188,0,0,0.22)]"
-                style={{ aspectRatio: "4 / 3" }}
+                className="group flex flex-col overflow-hidden rounded-[20px] border border-neutral-200/90 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#BC0000]/40 hover:shadow-[0_16px_36px_rgba(188,0,0,0.12)]"
               >
-                <SafeImage
-                  src={cat.image}
-                  alt={cat.name}
-                  fill
-                  priority={i < 4}
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent transition-colors duration-300 group-hover:from-[#250000]/95" />
-                <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-4">
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-2.5 py-0.5 text-[11px] font-bold text-white/90 backdrop-blur-md transition-colors group-hover:border-red-500/40 group-hover:text-red-200">
-                    <span>{cat.icon}</span>
-                    <span>{cat.subcategories.length} Categories</span>
+                {/* 3D Hardware Image on Theme Studio Background */}
+                <div className="relative w-full overflow-hidden bg-[#D18A8C]" style={{ aspectRatio: "4 / 3" }}>
+                  <SafeImage
+                    src={cat.image}
+                    alt={cat.name}
+                    fill
+                    priority={i < 4}
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
+
+                {/* Clean White Card Footer with Title and Chevron Arrow */}
+                <div className="flex items-center justify-between border-t border-neutral-100 bg-white px-3.5 py-3 sm:px-4 sm:py-3.5">
+                  <div className="min-w-0 pr-2">
+                    <h3 className="truncate text-sm font-bold text-neutral-900 transition-colors group-hover:text-[#BC0000] sm:text-base">
+                      {cat.name}
+                    </h3>
+                    <p className="mt-0.5 text-[11px] font-semibold text-neutral-400 sm:text-xs">
+                      {cat.subcategories.length > 0 ? `${cat.subcategories.length} Categories` : "Explore Catalog"}
+                    </p>
                   </div>
-                  <h3 className="mt-1.5 text-sm font-extrabold leading-tight text-white transition-colors group-hover:text-[#FFC5C5] sm:text-base">
-                    {cat.name}
-                  </h3>
+                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-all duration-300 group-hover:bg-[#BC0000] group-hover:text-white group-hover:translate-x-0.5">
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
                 </div>
               </Link>
             </motion.div>
